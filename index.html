@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ディレクターコース カリキュラム管理</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: #0f1117;
+            color: #e2e8f0;
+            min-height: 100vh
+        }
+
+        .app {
+            display: flex;
+            height: 100vh
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #161829;
+            border-right: 1px solid #2a2d42;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0
+        }
+
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px 40px
+        }
+
+        /* Sidebar */
+        .sidebar-header {
+            padding: 16px 16px 12px;
+            border-bottom: 1px solid #2a2d42
+        }
+
+        .sidebar-header h1 {
+            font-size: .95rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6366f1, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .sidebar-header p {
+            font-size: .68rem;
+            color: #64748b;
+            margin-top: 2px
+        }
+
+        .sidebar-stats {
+            display: flex;
+            gap: 6px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #2a2d42
+        }
+
+        .sidebar-stat {
+            flex: 1;
+            text-align: center;
+            padding: 6px 4px;
+            background: #1a1c2e;
+            border-radius: 6px
+        }
+
+        .sidebar-stat .val {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #6366f1
+        }
+
+        .sidebar-stat .lbl {
+            font-size: .58rem;
+            color: #64748b
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 3px
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: #2a2d42;
+            border-radius: 3px
+        }
+
+        .nav-phase-title {
+            font-size: .62rem;
+            font-weight: 700;
+            color: #475569;
+            padding: 10px 10px 3px;
+            letter-spacing: .08em
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all .12s;
+            font-size: .74rem;
+            color: #94a3b8;
+            font-weight: 500
+        }
+
+        .nav-item:hover {
+            background: rgba(99, 102, 241, .08);
+            color: #e2e8f0
+        }
+
+        .nav-item.active {
+            background: rgba(99, 102, 241, .15);
+            color: #818cf8
+        }
+
+        .nav-item .day-badge {
+            font-size: .58rem;
+            font-weight: 700;
+            background: rgba(99, 102, 241, .15);
+            color: #818cf8;
+            padding: 2px 5px;
+            border-radius: 4px;
+            min-width: 28px;
+            text-align: center;
+            flex-shrink: 0
+        }
+
+        .nav-item.is-support .day-badge {
+            background: rgba(251, 146, 60, .15);
+            color: #fb923c
+        }
+
+        .nav-item .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-left: auto
+        }
+
+        .status-dot.empty {
+            background: #334155
+        }
+
+        .status-dot.draft {
+            background: #f59e0b
+        }
+
+        .status-dot.done {
+            background: #10b981
+        }
+
+        .nav-item .title-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 160px
+        }
+
+        /* Main */
+        .main-header {
+            margin-bottom: 20px
+        }
+
+        .main-header h2 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            line-height: 1.4
+        }
+
+        .main-header .tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            flex-wrap: wrap
+        }
+
+        .tag {
+            font-size: .64rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 5px
+        }
+
+        .tag.phase {
+            background: rgba(99, 102, 241, .12);
+            color: #818cf8
+        }
+
+        .tag.type-l {
+            background: rgba(56, 189, 248, .12);
+            color: #38bdf8
+        }
+
+        .tag.type-s {
+            background: rgba(251, 146, 60, .12);
+            color: #fb923c
+        }
+
+        .tag.new {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: #fff
+        }
+
+        .tag.soft {
+            background: rgba(244, 114, 182, .1);
+            color: #f472b6
+        }
+
+        .goal-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, .08), rgba(139, 92, 246, .08));
+            border: 1px solid rgba(99, 102, 241, .15);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin: 14px 0
+        }
+
+        .goal-box h3 {
+            font-size: .72rem;
+            font-weight: 700;
+            color: #818cf8;
+            margin-bottom: 3px
+        }
+
+        .goal-box p {
+            font-size: .88rem;
+            font-weight: 600
+        }
+
+        /* Work box */
+        .work-box {
+            background: rgba(52, 211, 153, .06);
+            border: 1px solid rgba(52, 211, 153, .2);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin: 10px 0
+        }
+
+        .work-box h3 {
+            font-size: .72rem;
+            font-weight: 700;
+            color: #34d399;
+            margin-bottom: 3px
+        }
+
+        .work-box p {
+            font-size: .85rem
+        }
+
+        /* Input section */
+        .input-section {
+            margin-top: 20px
+        }
+
+        .input-section h3 {
+            font-size: .88rem;
+            font-weight: 700;
+            color: #f59e0b;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .input-area {
+            position: relative
+        }
+
+        .input-area textarea {
+            width: 100%;
+            min-height: 300px;
+            background: #161829;
+            border: 1px solid #2a2d42;
+            border-radius: 10px;
+            padding: 16px;
+            color: #e2e8f0;
+            font-family: inherit;
+            font-size: .88rem;
+            resize: vertical;
+            line-height: 1.8;
+            transition: border-color .2s
+        }
+
+        .input-area textarea:focus {
+            outline: none;
+            border-color: #f59e0b
+        }
+
+        .input-area textarea::placeholder {
+            color: #475569
+        }
+
+        .input-hint {
+            font-size: .72rem;
+            color: #64748b;
+            margin-top: 8px;
+            line-height: 1.6
+        }
+
+        /* Buttons row */
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            align-items: center
+        }
+
+        .btn {
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: none;
+            font-size: .78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+            font-family: inherit
+        }
+
+        .btn-save {
+            background: rgba(245, 158, 11, .15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, .3)
+        }
+
+        .btn-save:hover {
+            background: rgba(245, 158, 11, .25)
+        }
+
+        .btn-done {
+            background: rgba(16, 185, 129, .15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, .3)
+        }
+
+        .btn-done:hover {
+            background: rgba(16, 185, 129, .25)
+        }
+
+        .btn-reset {
+            background: rgba(239, 68, 68, .1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, .2)
+        }
+
+        .btn-reset:hover {
+            background: rgba(239, 68, 68, .2)
+        }
+
+        .save-msg {
+            font-size: .75rem;
+            color: #10b981;
+            opacity: 0;
+            transition: opacity .3s;
+            margin-left: 8px
+        }
+
+        .save-msg.show {
+            opacity: 1
+        }
+
+        /* Timestamp */
+        .timestamp {
+            font-size: .68rem;
+            color: #475569;
+            margin-top: 8px
+        }
+
+        /* Navigation buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #2a2d42
+        }
+
+        .nav-btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            background: rgba(99, 102, 241, .1);
+            border: 1px solid rgba(99, 102, 241, .2);
+            color: #818cf8;
+            font-size: .8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+            font-family: inherit
+        }
+
+        .nav-btn:hover {
+            background: rgba(99, 102, 241, .2)
+        }
+
+        .nav-btn:disabled {
+            opacity: .3;
+            cursor: default
+        }
+
+        /* Export */
+        .export-bar {
+            padding: 10px 16px;
+            border-top: 1px solid #2a2d42;
+            display: flex;
+            gap: 6px
+        }
+
+        .export-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(99, 102, 241, .1);
+            border: 1px solid rgba(99, 102, 241, .2);
+            color: #818cf8;
+            font-size: .7rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            font-family: inherit
+        }
+
+        .export-btn:hover {
+            background: rgba(99, 102, 241, .2)
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+</head>
+
+<body>
+
+    <div class="app">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>ディレクターコース</h1>
+                <p>カリキュラム管理ダッシュボード</p>
+            </div>
+            <div class="sidebar-stats">
+                <div class="sidebar-stat">
+                    <div class="val" id="stat-total">0</div>
+                    <div class="lbl">全Day</div>
+                </div>
+                <div class="sidebar-stat">
+                    <div class="val" id="stat-draft">0</div>
+                    <div class="lbl">下書き</div>
+                </div>
+                <div class="sidebar-stat">
+                    <div class="val" id="stat-done">0</div>
+                    <div class="lbl">確認済</div>
+                </div>
+            </div>
+            <div class="sidebar-nav" id="sidebar-nav"></div>
+            <div class="export-bar">
+                <div class="export-btn" onclick="exportAll()">📋 全Day一括コピー</div>
+                <div class="export-btn" onclick="exportDrafts()">📝 下書きのみコピー</div>
+            </div>
+        </div>
+        <div class="main" id="main-content">
+            <p style="color:#64748b;margin-top:40vh;text-align:center">← 左のサイドバーからDayを選んでください</p>
+        </div>
+    </div>
+
+    <!-- Auto-save status bar -->
+    <div id="autosave-bar"
+        style="position:fixed;top:0;left:0;right:0;height:28px;background:#1a1c2e;border-bottom:1px solid #2a2d42;display:flex;align-items:center;justify-content:center;gap:12px;z-index:200;font-size:.7rem">
+        <span id="save-status" style="color:#10b981">💾 自動保存ON</span>
+        <span id="last-saved-time" style="color:#64748b"></span>
+        <button id="file-connect-btn" onclick="connectFile()"
+            style="padding:2px 10px;border-radius:4px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#818cf8;font-size:.65rem;cursor:pointer;font-family:inherit">📂
+            保存先ファイルを選択</button>
+        <button onclick="downloadBackup()"
+            style="padding:2px 10px;border-radius:4px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);color:#34d399;font-size:.65rem;cursor:pointer;font-family:inherit">⬇️
+            バックアップDL</button>
+        <button onclick="loadFromFile()"
+            style="padding:2px 10px;border-radius:4px;background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.2);color:#fb923c;font-size:.65rem;cursor:pointer;font-family:inherit">📤
+            ファイルから復元</button>
+    </div>
+    <style>
+        .app {
+            margin-top: 28px;
+            height: calc(100vh - 28px)
+        }
+    </style>
+
+    <script>
+        // ─── File Handle for persistent save ───
+        let fileHandle = null;
+
+        async function connectFile() {
+            try {
+                fileHandle = await window.showSaveFilePicker({
+                    suggestedName: 'カリキュラム_保存データ.json',
+                    types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+                });
+                document.getElementById('file-connect-btn').textContent = '✅ ファイル接続済';
+                document.getElementById('file-connect-btn').style.borderColor = '#10b981';
+                document.getElementById('file-connect-btn').style.color = '#10b981';
+                await saveToFile(); // 即座に保存
+            } catch (e) { console.log('ファイル選択キャンセル'); }
+        }
+
+        async function saveToFile() {
+            if (!fileHandle) return;
+            try {
+                const allData = getAllData();
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(allData, null, 2));
+                await writable.close();
+                const now = new Date().toLocaleString('ja-JP');
+                document.getElementById('last-saved-time').textContent = `最終ファイル保存: ${now}`;
+                document.getElementById('save-status').textContent = '💾 ファイル保存OK';
+                document.getElementById('save-status').style.color = '#10b981';
+            } catch (e) {
+                console.error('ファイル保存エラー:', e);
+                document.getElementById('save-status').textContent = '⚠️ ファイル保存失敗';
+                document.getElementById('save-status').style.color = '#ef4444';
+            }
+        }
+
+        async function loadFromFile() {
+            try {
+                const [handle] = await window.showOpenFilePicker({
+                    types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+                });
+                const file = await handle.getFile();
+                const text = await file.text();
+                const data = JSON.parse(text);
+                // Restore to localStorage
+                Object.keys(data).forEach(key => {
+                    localStorage.setItem(key, JSON.stringify(data[key]));
+                });
+                fileHandle = handle;
+                document.getElementById('file-connect-btn').textContent = '✅ ファイル接続済';
+                alert('データを復元しました！');
+                updateNav(); updateStats();
+                if (activeDay) { const d = DAYS.find(x => x.day === activeDay); if (d) renderMain(d); }
+            } catch (e) { console.log('復元キャンセル'); }
+        }
+
+        function getAllData() {
+            const allData = {};
+            DAYS.forEach(d => {
+                const key = `curriculum_day_${d.day}`;
+                const raw = localStorage.getItem(key);
+                if (raw) allData[key] = JSON.parse(raw);
+            });
+            return allData;
+        }
+
+        function downloadBackup() {
+            const allData = getAllData();
+            const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `カリキュラム_バックアップ_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ─── Auto backup every 5 minutes ───
+        setInterval(() => {
+            const hasData = DAYS.some(d => getData(d.day).text);
+            if (hasData && fileHandle) saveToFile();
+        }, 5 * 60 * 1000);
+
+        // ─── Warn before leaving ───
+        window.addEventListener('beforeunload', e => {
+            const hasUnsaved = DAYS.some(d => getData(d.day).text);
+            if (hasUnsaved) { e.preventDefault(); e.returnValue = ''; }
+        });
+
+        const DAYS = [
+            { day: 1, phase: "フェーズ1：基礎理解", type: "講義", title: "キックオフ／全体マップ", goal: "90日間で何を学び、どんな状態になるかを理解する", work: "" , hints: ["90日後のゴール像をどう伝えるか", "初級コースとの違い・ステップアップ感", "講座の進め方（提出→開放の仕組み）", "報酬目安の具体数字（月◯万円）", "卒業生のエピソード（成功事例）"], fun: "🐣 Xで「#Reworksディレクターコース Day1」で受講開始宣言！自己紹介を投稿してみよう" },
+            { day: 2, phase: "フェーズ1：基礎理解", type: "講義", title: "ディレクターの役割・責任", goal: "ディレクターが「何をする人」なのかを明確に理解する", work: "" , hints: ["制作者vsディレクターの違いをどう説明する？", "ディレクターの7つの仕事フローで特に伝えたいこと", "報酬イメージの具体例（月◯案件で◯万円）", "MTGの重要性（ゆあ作の知見）をどこまで触れる？"], fun: "📢 Xで「ディレクターってこういう仕事なんだ！」学んだことを一言でアウトプット" },
+            { day: 3, phase: "フェーズ1：基礎理解", type: "講義+W", title: "運用目的①（売上/認知/採用/BR）", goal: "運用目的は4種類あり、それによって指標もCTAも全部変わることを理解する", work: "目的4分類の見分け練習（事例10個）" , hints: ["売上/認知/採用/BRの4分類の具体事例", "目的を間違えた失敗例（実体験あれば最高）", "クライアントの言葉を翻訳するコツ", "ワーク：10事例はどんなアカウントを使う？"], fun: "🔍 Xで「今日学んだ運用目的の4分類」を図解風にアウトプット" },
+            { day: 4, phase: "フェーズ1：基礎理解", type: "講義+W", title: "運用目的②（導線の役割）", goal: "導線の先にある公式LINE・YouTube等の役割まで深く理解する", work: "導線分析ワーク（3アカウント）" , hints: ["導線の具体パターン（LINE/YouTube等）", "プロフィール最適化のポイント", "実際のクライアント事例で導線を解説", "ワーク：分析させる3アカウントの選定"], fun: "📊 自分の推しアカウントの導線を分析してXでシェア！" },
+            { day: 5, phase: "フェーズ2：リサーチ＆設計", type: "講義+W", title: "引き出しを作る（競合リサーチ2軸）", goal: "競合リサーチの2軸を理解し、実際にリサーチを行う", work: "リサーチ15個（フォルダ分け）🔴 重い" , hints: ["リサーチの2軸とは何か？（同ジャンル＋他ジャンル）", "初級コースのリサーチとの違い", "リサーチの具体的な手順・ツール", "15個の分類方法（フォルダ分け）"], fun: "🎯 リサーチ中に見つけた「これスゴい！」アカウントをXでシェア" },
+            { day: 6, phase: "フェーズ2：リサーチ＆設計", type: "📎補助日", title: "リサーチ仕上げ＋提出", goal: "Day5のリサーチを仕上げて提出する", work: "", isSup: true , hints: ["補助日：リサーチの仕上げポイント", "提出時のチェックリスト"], fun: "💪 リサーチ完了報告をXで！15個やり切った達成感をシェア" },
+            { day: 7, phase: "フェーズ2：リサーチ＆設計", type: "講義+W", title: "擬似CW①：目的の特定と条件確認", goal: "クライアントの言葉から本当のニーズを読み取る力をつける", work: "ヒアリングシート/制約条件整理", soft: "相手の意図を汲む" , hints: ["初回MTGで何を聞くべきか（ゆあ作参照）", "営業ヒアリングシートの項目をCWヒアリングに転用", "目標確認・ターゲット・知識確認・役割分担", "「相手の意図を汲む」ソフトスキルの教え方"], fun: "🤝 「初回MTGで聞くべき質問TOP3」をXでアウトプット" },
+            { day: 8, phase: "フェーズ2：リサーチ＆設計", type: "講義+W", title: "擬似CW②：競合調査", goal: "成功事例をリサーチし提案の方向性を1つに絞る", work: "リサーチシート/方向性メモ" , hints: ["成功事例のリサーチ方法", "方向性を1つに絞る判断基準", "「いい事例」の見分け方"] },
+            { day: 9, phase: "フェーズ2：リサーチ＆設計", type: "講義+W", title: "コンセプト設計", goal: "「誰に・何を・どう約束する」を論理的に設計できる", work: "コンセプト設計ワーク", soft: "ゴールすり合わせ" , hints: ["「誰に・何を・どう約束する」の設計フレーム", "ペルソナ設定の具体的なやり方（ゆあ作追加要素）", "コンセプトがブレる原因と防ぎ方", "ゴールすり合わせのソフトスキル"], fun: "🎨 作ったコンセプトをXで「一言で表現」チャレンジ" },
+            { day: 10, phase: "フェーズ2：リサーチ＆設計", type: "講義+W", title: "導線設計", goal: "プロフィール→固定投稿→CTAの導線を設計できる", work: "導線設計ワーク" , hints: ["プロフィール→固定投稿→CTAの導線設計", "リンク先の最適化", "ハイライトの構成"] },
+            { day: 11, phase: "フェーズ2：リサーチ＆設計", type: "講義+W", title: "擬似CW③：提案書作成", goal: "クライアントがOKを出したくなる提案書の構造を理解する", work: "提案書作成（開始）🔴 重い", soft: "提案力" , hints: ["提案書の必要性（ゆあ作：ポートフォリオだけでは不十分）", "提案書のテンプレ化（考えるのは自分）", "クライアントがOKを出す提案書の構造", "提案力のソフトスキル"], fun: "📝 提案書の骨子をXで「こんな提案書作りました！」報告" },
+            { day: 12, phase: "フェーズ2：リサーチ＆設計", type: "📎補助日", title: "提案書仕上げ＋提出", goal: "Day11の提案書を仕上げて提出する", work: "", isSup: true , hints: ["補助日：提案書の仕上げポイント", "見た目/構成のチェックリスト"], fun: "🎉 提案書完成！Xで完成報告" },
+            { day: 13, phase: "フェーズ2：リサーチ＆設計", type: "講義+W", title: "提案書ブラッシュアップ", goal: "FBを受けて改善する修正力を身につける", work: "提案書（修正版）提出" , hints: ["FBを受けて改善する力の大切さ", "修正のポイント（何を直す/直さない）", "2回目MTGの位置付け（ゆあ作追加要素）"] },
+            { day: 14, phase: "フェーズ3：制作＆企画", type: "講義+W", title: "台本＆企画（集中視聴）", goal: "ショート動画の企画・台本の基礎をディレクター視点で理解する", work: "視聴メモ" , hints: ["ディレクター視点での台本・企画の見方", "初級コースの復習ではなく視点の転換", "集中視聴で何を見るべきか"], fun: "🎬 視聴メモで一番の気づきをXでシェア" },
+            { day: 15, phase: "フェーズ3：制作＆企画", type: "講義+W", title: "台本FBの出し方", goal: "制作者が「次に何をすればいいか分かる」FBを出せるようになる", work: "FB練習3本", isNew: true , hints: ["「次に何をすればいいか分かる」FBの出し方", "撮影ディレクション（ゆあ作：訪問不要にする撮影指示入り台本）", "FB練習の具体的なやり方"] },
+            { day: 16, phase: "フェーズ3：制作＆企画", type: "講義+W", title: "企画の柱と量産", goal: "「ネタ切れ」を起こさない企画の型と量産方法を習得する", work: "企画ストック作成（開始）🔴 重い" , hints: ["企画の柱（カテゴリ分け）の考え方", "量産するための型・フレームワーク", "「なぜこの企画か」の言語化（ゆあ作）"], fun: "💡 企画アイデアの中でお気に入りをXでシェア" },
+            { day: 17, phase: "フェーズ3：制作＆企画", type: "📎補助日", title: "企画ストック仕上げ", goal: "15本＋企画シート提出", work: "", isSup: true , hints: ["補助日：企画15本の仕上げ", "企画シートのフォーマット"], fun: "🔥 15本やり切り報告！Xで達成感をシェア" },
+            { day: 18, phase: "フェーズ3：制作＆企画", type: "講義+W", title: "制作ディレクション", goal: "制作者に意図が正確に伝わる指示を出せる", work: "制作指示書作成" , hints: ["制作指示書の必須要素", "制作者に意図が伝わる指示のコツ", "撮影指示の入れ方"] },
+            { day: 19, phase: "フェーズ3：制作＆企画", type: "講義+W", title: "運用ルーチン", goal: "ディレクターの日常業務をイメージできる", work: "工程管理表ワーク", soft: "タスク分解" , hints: ["ディレクターの1日・1週間のルーチン", "工程管理表の設計", "タスク分解のソフトスキル"], fun: "📋 自分なりのルーチン表を作ってXでシェア" },
+            { day: 20, phase: "フェーズ3：制作＆企画", type: "講義+W", title: "投稿単位PDCA", goal: "1投稿ごとに言語化できるようになる", work: "言語化ワーク", soft: "仮説思考" , hints: ["1投稿の振り返り方（数値＋仮説）", "自分のアカウントでPDCA推奨（ゆあ作追加要素）", "仮説思考のソフトスキル"], fun: "🧪 自分のアカウントの投稿を1つ分析してXでシェア" },
+            { day: 21, phase: "フェーズ3：制作＆企画", type: "講義+W", title: "週次PDCA", goal: "1週間単位で設計できるようになる", work: "回答ワーク" , hints: ["1週間単位での設計・振り返り", "何を見て何を変えるか"] },
+            { day: 22, phase: "フェーズ3：制作＆企画", type: "講義+W", title: "月次PDCA", goal: "月次で方針修正を判断できるようになる", work: "回答ワーク" , hints: ["月次での方針修正の判断方法", "月間レポートの数値（ゆあ作：プロフアクセス率・クリック率等）"], fun: "📈 月次PDCAのフレームをXで図解チャレンジ" },
+            { day: 23, phase: "フェーズ4：運用＆分析", type: "講義+W", title: "擬似CW⑤：改善提案", goal: "データから改善案を導き出す", work: "改善提案書（開始）🔴 重い" , hints: ["データから改善案を導く方法", "A/B案の出し方", "改善提案書の構造"] },
+            { day: 24, phase: "フェーズ4：運用＆分析", type: "📎補助日", title: "改善提案書仕上げ", goal: "改善提案書を仕上げて提出する", work: "", isSup: true , hints: ["補助日：改善提案書の仕上げ"], fun: "📊 改善提案書完成報告をXで！" },
+            { day: 25, phase: "フェーズ4：運用＆分析", type: "講義+W", title: "月次レポート作成", goal: "合意形成のためのレポートを作れるようになる", work: "レポート（開始）🔴 重い" , hints: ["月次レポートの構成（結論→根拠→次の打ち手）", "具体的な計算式（クリック率等）（ゆあ作）", "レポートのビジュアル設計"] },
+            { day: 26, phase: "フェーズ4：運用＆分析", type: "📎補助日", title: "レポート仕上げ", goal: "レポートを仕上げて提出する", work: "", isSup: true , hints: ["補助日：レポートの仕上げ"], fun: "📋 レポート完成報告！" },
+            { day: 27, phase: "フェーズ4：運用＆分析", type: "講義+W", title: "レポート説明ロープレ", goal: "レポートを説明して合意を取る力をつける", work: "録画提出", isNew: true , hints: ["10分報告の型（ChatGPT履歴参照）", "想定反論10個＋回答テンプレ", "定例MTGの進行フレーム（ゆあ作追加要素）", "合意メモの取り方"], fun: "🎤 ロープレ動画、緊張したけどやった！をXで報告" },
+            { day: 28, phase: "フェーズ4：運用＆分析", type: "講義", title: "報告・合意・継続提案", goal: "案件を継続するための技術を学ぶ", work: "" , hints: ["継続提案・アップセル・値上げ交渉の方法", "案件を長く続けるための関係構築"] },
+            { day: 29, phase: "フェーズ4：運用＆分析", type: "講義+W", title: "クライアント連絡テンプレ", goal: "「何て送ればいいか分からない」を解消する", work: "テンプレカスタマイズ＋ケース回答", isNew: true , hints: ["「何て送ればいいか分からない」の解消", "テンプレの種類と使い分け"] },
+            { day: 30, phase: "フェーズ4：運用＆分析", type: "講義+W", title: "トラブル対応", goal: "想定外に冷静に対処できるようになる", work: "ケーススタディ3件", isNew: true, soft: "期待値コントロール" , hints: ["トラブルの種類と対応パターン", "期待値コントロールのソフトスキル", "ケーススタディの具体内容"], fun: "😅 「こんなトラブルありそう！」をXで議論" },
+            { day: 31, phase: "フェーズ4：運用＆分析", type: "講義+W", title: "投稿スケジュール設計", goal: "4週間分を戦略的に配置できる", work: "スケジュール表＋工程管理表" , hints: ["4週間分の投稿配置の考え方", "工程管理表との連携"] },
+            { day: 32, phase: "フェーズ4：運用＆分析", type: "講義+W", title: "IG/TikTok違い→運用設計", goal: "プラットフォーム別に設計できる", work: "書き分けワーク" , hints: ["Instagram vs TikTokの違い", "プラットフォーム別の設計ポイント"] },
+            { day: 33, phase: "フェーズ4：案件獲得", type: "講義", title: "案件獲得①：全体像と7チャネル", goal: "どうやって仕事を取るかの全体像を理解する", work: "" , hints: ["案件獲得の全体像と7つのチャネル", "初級コース（CWのみ）からの拡張"], fun: "🚀 いよいよ案件獲得パート突入！Xで意気込み宣言" },
+            { day: 34, phase: "フェーズ4：案件獲得", type: "講義+W", title: "案件獲得②：ポートフォリオ", goal: "実績ゼロでも刺さるポートフォリオを作れる", work: "ポートフォリオ（開始）🔴 重い" , hints: ["実績ゼロでも刺さるポートフォリオの作り方", "履歴書・職務経歴書の準備（ゆあ作追加要素）"] },
+            { day: 35, phase: "フェーズ4：案件獲得", type: "📎補助日", title: "ポートフォリオ仕上げ", goal: "ポートフォリオを仕上げて提出する", work: "", isSup: true , hints: ["補助日：ポートフォリオの仕上げ"], fun: "✨ ポートフォリオ完成！Xで報告＆見せ合い" },
+            { day: 36, phase: "フェーズ4：案件獲得", type: "講義+W", title: "案件獲得③：CW攻略", goal: "選ばれる応募者になる", work: "プロフィール最適化ワーク" , hints: ["CWプロフィール最適化", "選ばれる応募者の特徴"] },
+            { day: 37, phase: "フェーズ4：案件獲得", type: "講義+W", title: "案件獲得④：提案文の書き方", goal: "刺さる提案文を書けるようになる", work: "提案文作成（開始）🔴 重い" , hints: ["刺さる提案文の構造", "テンプレ＋カスタマイズのバランス"] },
+            { day: 38, phase: "フェーズ4：案件獲得", type: "📎補助日", title: "提案文仕上げ", goal: "提案文3本を仕上げて提出する", work: "", isSup: true , hints: ["補助日：提案文3本の仕上げ"], fun: "📝 提案文3本完成！Xで報告" },
+            { day: 39, phase: "フェーズ4：案件獲得", type: "講義+W", title: "案件獲得⑤：DM＆フォーム営業", goal: "CW以外のチャネルを使える", work: "DM文面5本" , hints: ["DM営業・フォーム営業の具体的なやり方", "CW以外のチャネル開拓"] },
+            { day: 40, phase: "フェーズ4：案件獲得", type: "講義+W", title: "案件獲得⑥：面談の進め方", goal: "面談を自信を持って進められる", work: "面談ロープレ（開始）🔴 重い" , hints: ["面談の進め方（営業トークスクリプト参照）", "営業ヒアリングシートの活用", "成約/不成約の違い分析", "お客さんが気にしていること"], fun: "🎭 面談ロープレ、緊張した！をXでシェア" },
+            { day: 41, phase: "フェーズ4：案件獲得", type: "📎補助日", title: "面談ロープレ仕上げ", goal: "録画を仕上げて提出する", work: "", isSup: true , hints: ["補助日：面談ロープレの録画仕上げ"] },
+            { day: 42, phase: "フェーズ4：案件獲得", type: "講義+W", title: "案件獲得⑦：見積・契約・請求＋税金", goal: "お金の話を自信を持ってできる", work: "見積書＋契約チェック作成" , hints: ["見積・契約・請求の実務", "税金の基礎知識", "お金の話を堂々とする方法"], fun: "💰 お金の話ができるようになった！をXで報告" },
+            { day: 43, phase: "フェーズ4：案件獲得", type: "講義+W", title: "案件獲得⑧：自己BR＆紹介営業", goal: "営業しなくても案件が来る仕組み", work: "自己BR計画＋紹介テンプレ" , hints: ["自己ブランディングの方法", "紹介営業の仕組み化"] },
+            { day: 44, phase: "フェーズ4：案件獲得", type: "講義", title: "案件獲得⑨：値段設定＋AI活用", goal: "安売りしないマインド＋効率化", work: "" , hints: ["安売りしないマインドセット", "AI活用で効率化する方法"], fun: "🤖 AI活用のアイデアをXでシェア" },
+            { day: 45, phase: "フェーズ5：卒業制作", type: "講義", title: "中間まとめ＋卒業課題説明", goal: "卒業制作の全体像を理解する", work: "" , hints: ["卒業制作の全体像の説明方法", "9点セットの最終チェック項目"], fun: "🏁 ラストスパート！卒業制作スタート宣言をXで" },
+            { day: "46-57", phase: "フェーズ5：卒業制作", type: "FB形式", title: "卒業制作ワーク＋フィードバック", goal: "擬似CWで一気通貫→9点セット完成", work: "", isSup: true , hints: ["擬似CWの要件・進め方", "FBの方法とタイミング", "9点セット完成までの道筋"], fun: "🎓 卒業制作の進捗をXで日報！仲間と励まし合おう" },
+        ];
+
+        // ─── Firebase Init ───
+        const firebaseConfig = {
+          apiKey: "AIzaSyCVvzkIMG4Ji0ozVi4XHl7fZFUWvlfPAw8",
+          authDomain: "reworks-curriculum.firebaseapp.com",
+          databaseURL: "https://reworks-curriculum-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "reworks-curriculum",
+          storageBucket: "reworks-curriculum.firebasestorage.app",
+          messagingSenderId: "344099776506",
+          appId: "1:344099776506:web:f0a16e315ae74123d2e643"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const dbRef = db.ref('curriculum');
+
+        // ─── Storage (localStorage + Firebase sync) ───
+        function getData(day) {
+            const raw = localStorage.getItem(`curriculum_day_${day}`);
+            return raw ? JSON.parse(raw) : { text: '', status: 'empty', savedAt: null };
+        }
+        function saveData(day, text, status) {
+            const data = { text, status, savedAt: new Date().toLocaleString('ja-JP') };
+            localStorage.setItem(`curriculum_day_${day}`, JSON.stringify(data));
+            // Sync to Firebase
+            dbRef.child(`day_${day}`).set(data).then(() => {
+                const el = document.getElementById('save-status');
+                if(el){ el.textContent='☁️ クラウド同期OK'; el.style.color='#10b981'; }
+            }).catch(e => {
+                const el = document.getElementById('save-status');
+                if(el){ el.textContent='⚠️ 同期失敗'; el.style.color='#ef4444'; }
+            });
+            updateNav(); updateStats();
+        }
+
+        // Load from Firebase on startup
+        let firebaseLoaded = false;
+        dbRef.once('value').then(snap => {
+            const data = snap.val();
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    localStorage.setItem(`curriculum_${key}`, JSON.stringify(data[key]));
+                });
+                firebaseLoaded = true;
+                updateNav(); updateStats();
+                if (activeDay) { const d = DAYS.find(x=>x.day===activeDay); if(d) renderMain(d); }
+                const el = document.getElementById('save-status');
+                if(el){ el.textContent='☁️ クラウドから復元済'; el.style.color='#10b981'; }
+            }
+        }).catch(e => console.error('Firebase load error:', e));
+
+        let activeDay = null;
+
+        function updateStats() {
+            let total = DAYS.length, draft = 0, done = 0;
+            DAYS.forEach(d => { const s = getData(d.day).status; if (s === 'draft') draft++; if (s === 'done') done++; });
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-draft').textContent = draft;
+            document.getElementById('stat-done').textContent = done;
+        }
+
+        function updateNav() {
+            const nav = document.getElementById('sidebar-nav');
+            nav.innerHTML = '';
+            let currentPhase = '';
+            DAYS.forEach((d, i) => {
+                if (d.phase !== currentPhase) {
+                    currentPhase = d.phase;
+                    const ph = document.createElement('div');
+                    ph.className = 'nav-phase-title';
+                    ph.textContent = currentPhase;
+                    nav.appendChild(ph);
+                }
+                const item = document.createElement('div');
+                const dayLabel = typeof d.day === 'number' ? `D${d.day}` : d.day;
+                const data = getData(d.day);
+                item.className = `nav-item${d.isSup ? ' is-support' : ''}${activeDay === d.day ? ' active' : ''}`;
+                item.innerHTML = `<span class="day-badge">${dayLabel}</span><span class="title-text">${d.title}</span><span class="status-dot ${data.status}"></span>`;
+                item.onclick = () => { activeDay = d.day; updateNav(); renderMain(d); };
+                nav.appendChild(item);
+            });
+        }
+
+        function renderMain(d) {
+            const main = document.getElementById('main-content');
+            const dayLabel = typeof d.day === 'number' ? `Day${d.day}` : `Day${d.day}`;
+            const data = getData(d.day);
+            const dayIdx = DAYS.findIndex(x => x.day === d.day);
+
+            let tags = `<span class="tag phase">${d.phase}</span>`;
+            tags += d.isSup ? `<span class="tag type-s">${d.type}</span>` : `<span class="tag type-l">${d.type}</span>`;
+            if (d.isNew) tags += `<span class="tag new">🆕 NEW</span>`;
+            if (d.soft) tags += `<span class="tag soft">🤝 ${d.soft}</span>`;
+
+            let html = `
+    <div class="main-header">
+      <h2>${dayLabel}｜${d.title}</h2>
+      <div class="tags">${tags}</div>
+    </div>
+    <div class="goal-box"><h3>🎯 この講義のゴール</h3><p>${d.goal}</p></div>`;
+
+            if (d.work) {
+                html += `<div class="work-box"><h3>✏️ ワーク</h3><p>${d.work}</p></div>`;
+            }
+
+            // Brainstorming hints
+            if (d.hints) {
+                html += `<div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:10px;padding:14px 18px;margin:10px 0">
+                  <h3 style="font-size:.72rem;font-weight:700;color:#f59e0b;margin-bottom:8px">💡 書き込みヒント ── こんなことを考えてみてください</h3>
+                  <ul style="font-size:.82rem;line-height:1.8;color:#cbd5e1;padding-left:18px">${d.hints.map(h=>`<li>${h}</li>`).join('')}</ul>
+                </div>`;
+            }
+
+            // Fun element ideas
+            if (d.fun) {
+                html += `<div style="background:rgba(244,114,182,.06);border:1px solid rgba(244,114,182,.15);border-radius:10px;padding:14px 18px;margin:10px 0">
+                  <h3 style="font-size:.72rem;font-weight:700;color:#f472b6;margin-bottom:8px">🎉 楽しい要素アイデア</h3>
+                  <p style="font-size:.82rem;line-height:1.8;color:#cbd5e1">${d.fun}</p>
+                </div>`;
+            }
+
+            html += `
+    <div class="input-section">
+      <h3>📝 この講義で教えたい内容</h3>
+      <div class="input-area">
+        <textarea id="input-text" placeholder="この講義でどんな内容を教えたいか、伝えたいポイント、使いたいエピソード、受講生に出したいワーク内容など、自由に書いてください。\n\n書いた内容をもとに、AIがスライドを作れるレベルまで詳細化します。">${data.text}</textarea>
+      </div>
+      <div class="input-hint">
+        💡 例：「制作者との違いを明確に伝えたい」「実際のクライアントとのやりとりを例に出す」「この事例を使って説明したい」など、メモ書きでOKです
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-save" onclick="onSave('draft')">📝 一時保存</button>
+        <button class="btn btn-done" onclick="onSave('done')">✅ 確認済みにする</button>
+        <button class="btn btn-reset" onclick="onReset()">🗑️ クリア</button>
+        <span class="save-msg" id="save-msg">保存しました！</span>
+      </div>
+      ${data.savedAt ? `<div class="timestamp">最終保存：${data.savedAt}</div>` : ''}
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="goTo(${dayIdx - 1})" ${dayIdx === 0 ? 'disabled' : ''}>← 前のDay</button>
+      <button class="nav-btn" onclick="goTo(${dayIdx + 1})" ${dayIdx === DAYS.length - 1 ? 'disabled' : ''}>次のDay →</button>
+    </div>`;
+
+            main.innerHTML = html;
+            main.scrollTop = 0;
+        }
+
+        function onSave(status) {
+            const text = document.getElementById('input-text').value;
+            saveData(activeDay, text, status);
+            const msg = document.getElementById('save-msg');
+            msg.classList.add('show');
+            setTimeout(() => msg.classList.remove('show'), 2000);
+            // Re-render to show timestamp
+            const d = DAYS.find(x => x.day === activeDay);
+            if (d) renderMain(d);
+        }
+        function onReset() {
+            if (confirm('入力内容をクリアしますか？')) {
+                saveData(activeDay, '', 'empty');
+                const d = DAYS.find(x => x.day === activeDay);
+                if (d) renderMain(d);
+            }
+        }
+        function goTo(idx) {
+            if (idx >= 0 && idx < DAYS.length) {
+                activeDay = DAYS[idx].day;
+                updateNav();
+                renderMain(DAYS[idx]);
+            }
+        }
+
+        function exportAll() {
+            let out = '';
+            DAYS.forEach(d => {
+                const data = getData(d.day);
+                const dayLabel = typeof d.day === 'number' ? `Day${d.day}` : `Day${d.day}`;
+                out += `## ${dayLabel}｜${d.title}\n`;
+                out += `- ゴール：${d.goal}\n`;
+                if (d.work) out += `- ワーク：${d.work}\n`;
+                if (data.text) out += `- INPUT：\n${data.text}\n`;
+                out += `- ステータス：${data.status === 'done' ? '✅確認済' : data.status === 'draft' ? '📝下書き' : '未入力'}\n\n`;
+            });
+            navigator.clipboard.writeText(out).then(() => alert('全Dayの内容をクリップボードにコピーしました！'));
+        }
+        function exportDrafts() {
+            let out = '';
+            DAYS.forEach(d => {
+                const data = getData(d.day);
+                if (data.text) {
+                    const dayLabel = typeof d.day === 'number' ? `Day${d.day}` : `Day${d.day}`;
+                    out += `## ${dayLabel}｜${d.title}\n`;
+                    out += `${data.text}\n\n`;
+                }
+            });
+            if (!out) { alert('入力済みのDayがありません'); return; }
+            navigator.clipboard.writeText(out).then(() => alert('入力済みDayの内容をクリップボードにコピーしました！'));
+        }
+
+        // Auto-save on input (debounced file save)
+        let fileSaveTimer = null;
+        document.addEventListener('input', e => {
+            if (e.target.id === 'input-text') {
+                const text = e.target.value;
+                const current = getData(activeDay);
+                saveData(activeDay, text, current.status === 'empty' && text ? 'draft' : current.status);
+                // Debounced file save (3 seconds after last keystroke)
+                clearTimeout(fileSaveTimer);
+                fileSaveTimer = setTimeout(() => saveToFile(), 3000);
+            }
+        });
+
+        // Init
+        updateNav(); updateStats();
+    </script>
+</body>
+
+</html>
